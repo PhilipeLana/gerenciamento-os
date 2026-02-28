@@ -5,23 +5,53 @@ namespace App\Http\Controllers;
 use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
+use Illuminate\Support\Facades\Auth; 
 
 class UserController extends Controller
 {
-    
-
+    // tela de login
     public function showLogin()
     {
         return view('auth.login');
     }
-//lista todos os usuarios cadastrados para o admin( temos que implementar uma tela sozinha para isto)
+
+    // processar a tela de login
+    public function login(Request $request)
+    {
+        // Validação: ***
+        $credentials = $request->validate([
+            'email' => ['required', 'email'],
+            'password' => ['required'],
+        ]);
+
+            // garante credenciais ***
+        if (Auth::attempt($credentials)) {
+            
+            //Segurança de Sessão: Gera um novo ID de sessão para evitar ataques ***
+            $request->session()->regenerate();
+
+            // Verifica o perfil para ver nivel de acesso 
+            if (Auth::user()->perfil === 'admin') {
+                return redirect()->intended('dashboard-admin');
+            }
+
+            return redirect()->intended('dashboard-usuario');
+        }
+
+        // trata falha no login caso os dados não de match, volta pro formulario ****
+        return back()->withErrors([
+            'email' => 'As credenciais fornecidas não correspondem aos nossos registros.',
+        ])->onlyInput('email'); // Mantém o e-mail digitado para o usuário não ter que digitar de novo ***
+    }
+
+    // lista todos os usuários para o admin
     public function index()
     {
         $users = User::all();
         return view('users.index', compact('users'));
     }
 
-    //processsa o novo cadastro
+    // Processa o cadastro de novos usuários (Feito pelo Admin)
     public function store(Request $request)
     {
         $request->validate([
@@ -41,5 +71,12 @@ class UserController extends Controller
         return redirect()->back()->with('success', 'Usuário cadastrado com sucesso!');
     }
 
-    
+    //implementação do logout
+    public function logout(Request $request)
+    {
+        Auth::logout();
+        $request->session()->invalidate();
+        $request->session()->regenerateToken();
+        return redirect('/login');
+    }
 }
