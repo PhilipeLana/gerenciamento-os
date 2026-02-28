@@ -8,7 +8,13 @@ use Illuminate\Support\Facades\Hash;
 
 class UserController extends Controller
 {
-    //lista todos os usuarios cadastrados para o admin( temos que implementar uma tela sozinha para isto)
+    
+
+    public function showLogin()
+    {
+        return view('auth.login');
+    }
+//lista todos os usuarios cadastrados para o admin( temos que implementar uma tela sozinha para isto)
     public function index()
     {
         $users = User::all();
@@ -34,4 +40,6 @@ class UserController extends Controller
 
         return redirect()->back()->with('success', 'Usuário cadastrado com sucesso!');
     }
+
+    
 }
