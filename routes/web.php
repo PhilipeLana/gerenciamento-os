@@ -37,3 +37,16 @@ Route::middleware(['auth', \App\Http\Middleware\CheckAdmin::class])->group(funct
     //
     Route::get('/usuarios', [UserController::class, 'index']);
 });
+
+// Rotas para o Usuário Comum
+Route::middleware(['auth'])->group(function () {
+    
+    // Dashboard do Usuário
+    Route::get('/dashboard-usuario', function () {
+        return "Área do Usuário";
+    })->name('dashboard.usuario');
+
+    // Abrir nova OS
+    Route::get('/os/nova', [OrdemServicoController::class, 'create'])->name('os.create');
+    Route::post('/os/nova', [OrdemServicoController::class, 'store'])->name('os.store');
+});
