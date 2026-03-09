@@ -14,6 +14,12 @@
             <label>Senha:</label>
             <input type="password" name="password" required>
         </div>
+        
         <button type="submit">Entrar</button>
+
+        {{-- Implementação do link para esqueci minha senha --}}
+        <div style="margin-top: 15px;">
+            <a href="{{ route('password.request') }}">Esqueci minha senha</a>
+        </div>
     </form>
 @endsection

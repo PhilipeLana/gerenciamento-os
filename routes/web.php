@@ -2,51 +2,55 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\OrdemServicoController;
+use App\Http\Controllers\AdminController;
 
-// Redireciona raiz para login
+// redireciona para login
 Route::get('/', function () {
     return redirect()->route('login');
 });
 
-// Autenticação
+// autenticação
 Route::get('/login', [UserController::class, 'showLogin'])->name('login');
 Route::post('/login', [UserController::class, 'login']);
 Route::post('/logout', [UserController::class, 'logout'])->name('logout');
 
-//
-// Estas rotas recebem o usuário após a validação do perfil no Controller
-Route::get('/dashboard-admin', function () {
-    return "Área do Administrador - Login Funcional!";
-})->name('dashboard.admin');
+// recuperação de senha e abertura de os automática
+Route::get('/esqueceu-senha', function () {
+    return view('auth.esqueceu-senha');
+})->name('password.request');
+Route::post('/esqueceu-senha', [UserController::class, 'handleForgotPassword'])->name('password.email');
 
-Route::get('/dashboard-usuario', function () {
-    return "Área do Usuário Comum - Login Funcional!";
-})->name('dashboard.usuario');
-
-//Gestão de Usuários 
-Route::get('/usuarios', [UserController::class, 'index']);
-Route::post('/usuarios/store', [UserController::class, 'store'])->name('users.store');
-
-//Middleware
+// rotas protegidas para admin
 Route::middleware(['auth', \App\Http\Middleware\CheckAdmin::class])->group(function () {
     
-    Route::get('/dashboard-admin', function () {
-        return "Área do Administrador - Protegida e Funcional!";
-    })->name('dashboard.admin');
+    // painel principal do admin
+    Route::get('/dashboard-admin', [AdminController::class, 'dashboard'])->name('dashboard.admin');
 
-    //
-    Route::get('/usuarios', [UserController::class, 'index']);
+    // listagem geral de os para o técnico
+    Route::get('/admin/os', [AdminController::class, 'indexOs'])->name('admin.os.index');
+
+    // tratamento de os pelo admin (movidas para dentro do grupo seguro)
+    Route::get('/admin/os/{id}', [AdminController::class, 'show'])->name('admin.os.show');
+    Route::put('/admin/os/{id}', [AdminController::class, 'update'])->name('admin.os.update');
+
+    // gestão de usuários
+    Route::get('/usuarios', [UserController::class, 'index'])->name('users.index');
+    Route::post('/usuarios/store', [UserController::class, 'store'])->name('users.store');
 });
 
-// Rotas para o Usuário Comum
+// rotas para usuário comum
 Route::middleware(['auth'])->group(function () {
     
-    // Dashboard do Usuário
+    // painel do usuário
     Route::get('/dashboard-usuario', function () {
-        return "Área do Usuário";
+        return view('usuarios.dashboard');
     })->name('dashboard.usuario');
 
-    // Abrir nova OS
+    // lista os chamados do usuário logado
+    Route::get('/meus-chamados', [OrdemServicoController::class, 'index'])->name('os.index');
+
+    // abertura de nova os
     Route::get('/os/nova', [OrdemServicoController::class, 'create'])->name('os.create');
     Route::post('/os/nova', [OrdemServicoController::class, 'store'])->name('os.store');
 });
