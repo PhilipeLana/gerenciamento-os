@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\User;
+use App\Models\OrdemServico; // Importação necessária para criar a O.S.
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Auth; 
@@ -78,5 +79,32 @@ class UserController extends Controller
         $request->session()->invalidate();
         $request->session()->regenerateToken();
         return redirect('/login');
+    }
+
+    // Processa a solicitação de esqueci a senha e gera uma O.S automática para o Admin
+    public function handleForgotPassword(Request $request)
+    {
+        // Valida se o e-mail existe na requisição
+        $request->validate(['email' => 'required|email']);
+
+        // Busca o usuário pelo e-mail informado
+        $usuario = User::where('email', $request->email)->first();
+
+        if ($usuario) {
+            // Cria a Ordem de Serviço vinculada ao usuário que esqueceu a senha
+            OrdemServico::create([
+                'user_id' => $usuario->id,
+                'titulo' => 'Recuperação de Senha',
+                'descricao' => "O usuário {$usuario->name} solicitou o reset de senha. Tratar via banco de dados ou painel admin.",
+                'setor' => 'SISTEMA',
+                'categoria' => 'Outros',
+                'status' => 'Pendente',
+            ]);
+
+            return redirect()->route('login')->with('success', 'Chamado de recuperação aberto! Aguarde o reset pelo administrador.');
+        }
+
+        // Caso o e-mail não seja encontrado, retorna com erro
+        return back()->withErrors(['email' => 'E-mail não encontrado em nosso sistema.']);
     }
 }
